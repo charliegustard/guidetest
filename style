@@ -1,1 +1,30 @@
-DD
+function drawLine(x1, y1, x2, y2) {
+    const line = document.createElement('div');
+    line.className = 'line';
+    document.body.appendChild(line);
+
+    const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+    const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
+
+    line.style.width = `${length}px`;
+    line.style.transform = `translate(${x1}px, ${y1}px) rotate(${angle}deg)`;
+
+    return line;
+}
+
+function createDot(x, y) {
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.style.left = `${x}px`;
+    dot.style.top = `${y}px`;
+    document.body.appendChild(dot);
+    return dot;
+}
+
+function handleMeasurement(point1, point2) {
+    const dot1 = createDot(point1[0], point1[1]);
+    const dot2 = createDot(point2[0], point2[1]);
+    const line = drawLine(point1[0], point1[1], point2[0], point2[1]);
+
+    return { dot1, dot2, line };
+}

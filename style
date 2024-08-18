@@ -1,30 +1,77 @@
-function drawLine(x1, y1, x2, y2) {
-    const line = document.createElement('div');
-    line.className = 'line';
-    document.body.appendChild(line);
+var point1 = null;
+var point2 = null;
 
-    const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-    const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
-
-    line.style.width = `${length}px`;
-    line.style.transform = `translate(${x1}px, ${y1}px) rotate(${angle}deg)`;
-
-    return line;
+function calculateDistance(p1, p2) {
+    var dx = p2[0] - p1[0];
+    var dy = p2[1] - p1[1];
+    var dz = p2[2] - p1[2];
+    return Math.sqrt(dx * dx + dy * dy + dz * dz).toFixed(2);
 }
 
-function createDot(x, y) {
-    const dot = document.createElement('div');
-    dot.className = 'dot';
-    dot.style.left = `${x}px`;
-    dot.style.top = `${y}px`;
-    document.body.appendChild(dot);
-    return dot;
-}
+var success = function (api) {
+    api.addEventListener('viewerready', function () {
+        api.setHighlightOptions({
+            outlineWidth: 5,
+            outlineColor: [0.058, 0.757, 0.184],
+            outlineDuration: 3,
+            highlightColor: [0.058, 0.757, 0.184],
+            highlightDuration: 3
+        });
 
-function handleMeasurement(point1, point2) {
-    const dot1 = createDot(point1[0], point1[1]);
-    const dot2 = createDot(point2[0], point2[1]);
-    const line = drawLine(point1[0], point1[1], point2[0], point2[1]);
+        api.setTextureQuality('hd', function(err) {
+            if (!err) {
+                console.log('Texture quality set to high definition');
+            } else {
+                console.error('Error setting HD quality:', err);
+            }
+        });
 
-    return { dot1, dot2, line };
-}
+        setTimeout(function() {
+            api.setTextureQuality('hd', function(err) {
+                if (!err) {
+                    console.log('Texture quality re-applied to high definition');
+                } else {
+                    console.error('Error re-applying HD quality:', err);
+                }
+            });
+        }, 3000);
+
+        api.addEventListener("click", function (info) {
+            var text = "Block Type";
+            if (info && info.material) {
+                if (info.material.name !== "background") {
+                    text += ': ' + info.material.name + '';
+                    api.highlightMaterial(info.material);
+                    console.log(text);
+
+                    // Measurement logic
+                    if (!point1) {
+                        point1 = info.position3D;
+                        document.getElementById('point1').textContent = point1.map(v => v.toFixed(2)).join(', ');
+
+                    } else if (!point2) {
+                        point2 = info.position3D;
+                        document.getElementById('point2').textContent = point2.map(v => v.toFixed(2)).join(', ');
+
+                        var distance = calculateDistance(point1, point2);
+                        document.getElementById('distance').textContent = distance;
+
+                        document.getElementById('measurement-info').style.display = 'block';
+
+                    } else {
+                        // Reset points
+                        point1 = info.position3D;
+                        point2 = null;
+                        document.getElementById('measurement-info').style.display = 'none';
+                    }
+                } else {
+                    api.highlightMaterial();
+                }
+            } else {
+                text += " background";
+                api.highlightMaterial();
+                console.log(text);
+            }
+        }, { pick: "fast" });
+    });
+};
